@@ -252,8 +252,6 @@ DefectRecord: reported → verified → closed
 
 ---
 
----
-
 ## 2. 사상 규칙
 
 ### 2.1 규칙 요약 — 정본
@@ -264,7 +262,7 @@ DefectRecord: reported → verified → closed
 | 규칙 2 | Field | Attribute (컬럼) | — |
 | 규칙 3 | Child Section | **새 Entity** + 1:N (parent FK) | 정의 |
 | 규칙 4 | Reference Section | **기존 Entity로의 FK** — 지금 참 | 투영 |
-| 규칙 5 | Attachment Section | **기존 Entity의 값 복사** — 그때 참 | 투영 |
+| 규칙 5 | Attachment Section | **그때 값의 고정** — 문서 스냅샷이면 값 복사, 파일이면 파일 테이블 | 투영 |
 
 > **규칙 1은 Main Section에만 적용됩니다.** 모든 섹션이 테이블이 되는 것이 아닙니다. 정의하는 섹션(Main·Child)만 새 엔티티를 만들고, 투영하는 섹션(Reference·Attachment)은 이미 있는 엔티티에서 필요한 속성만 골라 옵니다 — [방법론 「정의하는 섹션과 투영하는 섹션」](methodology.md#정의하는-섹션과-투영하는-섹션).
 >
@@ -286,7 +284,11 @@ Formology에서 데이터베이스 설계는 **양식 구조에서 자연스럽�
 
 ### 2.3 규칙별 상세
 
-#### 규칙 1: Selection Field in Reference Section = FK
+아래 소제목의 괄호는 **[2.1 정본 표](#21-규칙-요약--정본)의 규칙 번호**입니다. 이 절은 그 규칙들이 실제 스키마에서 어떤 모양이 되는지를 보이는 예시이며, 규칙 자체를 다시 정의하지 않습니다.
+
+> SQL은 **예시**입니다. 특정 데이터베이스를 권하는 것이 아닙니다.
+
+#### Main Section → 새 Entity, Reference Section의 Selection → FK  *(규칙 1·4)*
 
 **워크숍 양식 구조**:
 ```
@@ -325,7 +327,7 @@ CREATE TABLE qc_requests (
 );
 ```
 
-#### 규칙 2: Text/Numeric/Date Fields = 컬럼
+#### Text·Numeric·Date Field → 컬럼  *(규칙 2)*
 
 ```sql
 CREATE TABLE work_logs (
@@ -340,7 +342,7 @@ CREATE TABLE work_logs (
 
 **패턴**: `Main Section Field (Text/Numeric/Date)` → VARCHAR/INTEGER/DATE 컬럼
 
-#### 규칙 3: Child Section = 1:N 테이블
+#### Child Section → 새 Entity + 1:N  *(규칙 3)*
 
 **워크숍 양식 구조**:
 ```
@@ -369,7 +371,7 @@ CREATE TABLE qc_request_items (
 );
 ```
 
-#### 규칙 4: "참조:" = FK (최신 버전)
+#### "참조:" 칸 → 최신 버전으로의 FK  *(규칙 4)*
 
 ```sql
 CREATE TABLE work_standards (
@@ -387,7 +389,7 @@ CREATE VIEW latest_work_standards AS
 SELECT * FROM work_standards WHERE is_latest = true;
 ```
 
-#### 규칙 5: "붙임:" = 1:N (파일)
+#### "붙임:" 칸 → 파일 테이블  *(규칙 5 — 파일인 경우)*
 
 ```sql
 CREATE TABLE defect_attachments (
@@ -401,6 +403,8 @@ CREATE TABLE defect_attachments (
   FOREIGN KEY (record_id) REFERENCES defect_records(id) ON DELETE CASCADE
 );
 ```
+
+**붙임이 문서 스냅샷인 경우**는 파일이 아니라 **값 복사**가 됩니다 — 원본 문서의 그때 값이 이 문서의 칸으로 굳습니다. 두 경우 모두 규칙 5이며, 갈리는 지점은 붙이는 것이 파일이냐 다른 문서의 내용이냐입니다. 구체적인 모습은 [2.5](#25-관계와-시간-결합의-구현)에 있습니다.
 
 ### 2.4 Field 타입 사상
 
@@ -588,6 +592,8 @@ Section-Field 구조가 명확하면 정규화는 자연스럽게 따라옵니�
 
 ### 3.1 핵심 원칙
 
+> 아래는 **REST를 예로 든 것**입니다. 원리는 *서식 접미어가 동작 패턴을 결정한다*이며, 이는 RPC든 메시지 기반이든 동일하게 성립합니다. 프로토콜 선택은 구현체의 몫입니다.
+
 ```
 서식(FormType)     = API 리소스 (Resource)
 양식(Form) 구조    = API 스키마 (Schema)
@@ -634,13 +640,17 @@ GET    /resource          # 집계 결과 조회
 GET    /resource/export   # Excel/PDF 다운로드
 ```
 
-**-록 (錄, 이력)**:
+**-록 (錄)** — [1차와 2차가 섞이는 자리](methodology.md#분류의-세-축)입니다.
+
 ```yaml
+# 1차 (회의록·대장처럼 사람이 쓰는 것)
 POST   /resource          # 신규 등록
 PUT    /resource/:id      # 수정
-DELETE /resource/:id      # 삭제
 GET    /resource/:id      # 조회
 GET    /resource          # 목록 (필터링, 페이징)
+
+# 2차 (이력록처럼 축적에서 계산되는 것)
+GET    /resource          # 조회만. append-only이므로 수정·삭제 없음
 ```
 
 ---
