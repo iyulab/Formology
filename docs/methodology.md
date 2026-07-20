@@ -1,8 +1,10 @@
 # 방법론
 
-Formology의 핵심 개념: 문서 분류, 흐름, 구조, 관계, 네이밍, 데이터 모델링.
+Formology의 핵심 개념: 문서 분류, 흐름, 구조, 관계, 네이밍.
 
-> 용어 정본: [구현 원리 — 용어 사전](realization.md#8-용어-사전). `FormType(서식) / Form(양식) / Document(문서) / Record(레코드)`
+> 문서에서 데이터 모델을 도출하는 규칙은 [도출 원리](derivation.md)에 있습니다.
+
+> 용어 정본: [용어 사전](glossary.md). `FormType(서식) / Form(양식) / Document(문서) / Record(레코드)`
 
 ---
 
@@ -340,7 +342,7 @@ Form / Document
 - **일관성** — 이후 서식에서 같은 개념은 같은 모양을 갖습니다
 - **역제약** — 승격된 타입은 임의 변형을 허용하지 않습니다. 프로그래밍의 타입 시스템에 해당하는 장치가 **서식 레이어에** 생깁니다
 
-그리고 이것은 [구현 원리 1.2](realization.md#12-구조적-사상)의 **재사용성 판별 기준을 관찰로 대체**합니다. 지금까지는 사람이 "이거 재사용되나?"를 판단했습니다. 서식이 충분히 쌓이면 **서식 집합이 답합니다.**
+그리고 이것은 [도출 원리 1.2](derivation.md#12-구조적-사상)의 **재사용성 판별 기준을 관찰로 대체**합니다. 지금까지는 사람이 "이거 재사용되나?"를 판단했습니다. 서식이 충분히 쌓이면 **서식 집합이 답합니다.**
 
 #### 서식 증식에 대한 처방
 
@@ -439,7 +441,7 @@ Document의 특정 버전 상태를 복사하여 이력 관리에 활용합니�
   현재 등급   ← 항상 최신이어야 의미가 있다                  → 참조
 ```
 
-이것은 새 제안이 아닙니다. **구현은 이미 이렇게 하고 있습니다.** [구현 원리 2.4](realization.md#24-document-관계--fk계층)의 `work_logs` 테이블을 보십시오 — 작업지시서로의 FK(`work_order_id`, 참조)와 그 시점 값의 복사본(`product_name`, `target_quantity`, 붙임)이 **한 테이블 안에 공존**하고, 스냅샷 자동 복사 트리거까지 붙어 있습니다.
+이것은 새 제안이 아닙니다. **구현은 이미 이렇게 하고 있습니다.** [도출 원리 2.5](derivation.md#25-관계와-시간-결합의-구현)의 `work_logs` 테이블을 보십시오 — 작업지시서로의 FK(`work_order_id`, 참조)와 그 시점 값의 복사본(`product_name`, `target_quantity`, 붙임)이 **한 테이블 안에 공존**하고, 스냅샷 자동 복사 트리거까지 붙어 있습니다.
 
 즉 이 절은 이론이 자기 구현을 못 따라가던 상태를 메우는 것입니다. 구현이 앞서 있었습니다.
 
@@ -554,127 +556,6 @@ Reference Section의 필드는 기본이 참조입니다. 그 안에서 "이건 
 | 보고 | Report | rpt |
 
 ---
-
-## 6. 데이터 모델 도출
-
-### 핵심 원리
-
-> **Form의 Section-Field 구조를 보면 데이터 모델이 보인다.**
-
-추상화 없이도, Form의 구조만 있으면 ERD가 자연스럽게 도출됩니다.
-
-### 사상 규칙 (Form → Record)
-
-| Form 구조 | 무리 | 데이터 모델 | 설명 |
-|-----------|------|-------------|------|
-| Main Section | 정의 | 메인 테이블 (새 엔티티) | `qc_requests` |
-| Child Section | 정의 | 자식 테이블 (새 엔티티, 1:N) | `qc_request_items` |
-| Reference Section | 투영 | 기존 엔티티로의 FK | `production_plan_id FK` |
-| Attachment Section | 투영 | 파일 테이블 / 값 복사 (1:N) | `qc_request_attachments` |
-
-| Field 타입 | DB 컬럼 타입 | 예시 |
-|-----------|-------------|------|
-| Text | VARCHAR/TEXT | `document_no VARCHAR(50)` |
-| Numeric | INTEGER/DECIMAL | `quantity INTEGER` |
-| Date/Time | DATE/TIMESTAMP | `created_at TIMESTAMP` |
-| Selection (Single) | FK | `product_id FK` |
-| Selection (Multiple) | 1:N 테이블 | `qc_items` |
-| Boolean | BOOLEAN | `is_urgent BOOLEAN` |
-
-### 실전 예시
-
-**Form 구조**:
-```
-┌─────────────────────────┐
-│ 품질검사의뢰서            │
-├─────────────────────────┤
-│ [Main Section]          │
-│ 제품명: [선택 ▼]        │  ← Selection → FK
-│ LOT번호: [입력]         │  ← Text → VARCHAR
-│ 수량: [숫자]            │  ← Numeric → INTEGER
-├─────────────────────────┤
-│ [Child Section]         │
-│ 검사항목:               │  ← Multiple → 1:N 테이블
-│ ☑ 외관  ☑ 치수  □ 성능 │
-├─────────────────────────┤
-│ [Reference Section]     │
-│ 참조: 생산계획서 PLAN-045│ ← FK (살아있는 링크)
-├─────────────────────────┤
-│ [Attachment Section]    │
-│ 붙임: 도면.pdf          │  ← 파일 (스냅샷)
-└─────────────────────────┘
-```
-
-**도출되는 Record 구조**:
-```sql
--- Main Section → 메인 Entity
-CREATE TABLE qc_requests (
-  id VARCHAR(50) PRIMARY KEY,
-  document_no VARCHAR(50),
-  product_id VARCHAR(50),        -- Selection → FK
-  lot_number VARCHAR(50),        -- Text → VARCHAR
-  quantity INTEGER,              -- Numeric → INTEGER
-  production_plan_id VARCHAR(50), -- Reference → FK
-  FOREIGN KEY (product_id) REFERENCES products(id),
-  FOREIGN KEY (production_plan_id) REFERENCES production_plans(id)
-);
-
--- Child Section → 자식 Entity (1:N)
-CREATE TABLE qc_request_items (
-  id VARCHAR(50) PRIMARY KEY,
-  request_id VARCHAR(50) NOT NULL,
-  item_name VARCHAR(100),
-  is_checked BOOLEAN,
-  FOREIGN KEY (request_id) REFERENCES qc_requests(id)
-);
-
--- Attachment Section → 파일 Entity (스냅샷)
-CREATE TABLE qc_request_attachments (
-  id VARCHAR(50) PRIMARY KEY,
-  request_id VARCHAR(50) NOT NULL,
-  file_name VARCHAR(200),
-  file_path VARCHAR(500),
-  FOREIGN KEY (request_id) REFERENCES qc_requests(id)
-);
-```
-
-### 정규화 자동 적용
-
-Section-Field 구조가 명확하면 정규화는 자연스럽게 따라옵니다:
-
-- **1NF**: Child Section 발견 → 별도 Entity로 분리 → 원자성 자동 달성
-- **2NF**: Selection Field 발견 → FK로 마스터 참조 → 부분 종속 제거
-- **3NF**: Reference Section 발견 → FK로 연결 → 이행 종속 제거
-
-### 전통 방식 vs Formology
-
-| | 전통 데이터 모델링 | Formology |
-|---|---|---|
-| 과정 | Entity → Attribute → 관계 → 검증 | Form → Section/Field → Entity/Attribute → Record |
-| 접근 | Top-down (추상화부터) | Bottom-up (구체적 Form부터) |
-| 검증 주체 | 설계자 (정규화 이론) | 현업 (자기 서식) |
-| 산출물 | ERD — 현업이 읽지 못함 | 양식 스케치 — 현업이 그림 |
-
-**실측된 것 하나**: 플라스틱 사출 공장 MES 프로젝트에서 **2시간 15분** 만에 22개 서식이 도출되고 4개 주요 양식의 구조가 스케치되었습니다. 참석자는 현업 5명과 개발 2명이었고, 도출된 서식 목록에 **참석자 전원이 그 자리에서 동의**했습니다. 상세는 [사례 연구](realization.md#6-사례-연구)를 보십시오.
-
-> 전통 방식과의 소요 시간 비교는 **의도적으로 싣지 않았습니다.** 대조군을 측정한 적이 없기 때문입니다. 측정하지 않은 숫자로 이기는 것보다, 측정한 숫자 하나를 정확히 제시하는 편이 낫습니다.
-
-### 검증 방법
-
-**Form 기반 현업 검증**:
-```
-개발자: "품질검사의뢰서에 제품 정보 Section 있죠?"
-현업: "네, 제품명이랑 LOT번호요"
-개발자: "제품은 선택 방식이죠?"
-현업: "네, 목록에서 선택해요"
-→ Section/Field 용어로 자연스러운 검증 완료
-```
-
-**ERD 역검증** (Record → Form):
-- 테이블 → Section
-- FK → Selection Field 또는 Reference Section
-- 일반 컬럼 → Field
-- 1:N 테이블 → Child Section 또는 Attachment Section
 
 ---
 
