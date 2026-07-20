@@ -1682,7 +1682,7 @@ Document 생명주기: 생성 → 초안 → 제출 → 승인 → 완료 → �
 
 #### L3: Record (레코드)
 
-Document가 **데이터베이스에 저장된 형태**. Section → Entity(테이블), Field → Attribute(컬럼).
+Document가 **데이터베이스에 저장된 형태**. 정의 섹션 → Entity(테이블), Field → Attribute(컬럼), 투영 섹션 → 기존 Entity로의 FK 또는 값 복사.
 
 ```
 [Main Section]        → main_table
@@ -1696,18 +1696,20 @@ Document가 **데이터베이스에 저장된 형태**. Section → Entity(테�
 
 #### Section (섹션)
 
-Form을 구성하는 **의미 단위 그룹**. Section → Entity(테이블) 사상의 기본 단위.
+Form을 구성하는 **의미 단위 그룹**. 엔티티 경계를 결정하는 기본 단위.
 
 **4가지 Section 유형**:
 
-| 유형 | 개념 | 원본 수정 | DB 구현 | 사용 예시 |
-|------|------|-----------|---------|-----------|
-| **Main Section** | 핵심 정보 섹션 | - | 주 테이블 | 문서 본문 |
-| **Child Section** | 1:N 종속 섹션 | - | 자식 테이블 (parent FK) | 자재 내역, 검사 항목 |
-| **Reference Section** | 살아있는 링크 | 자동 반영 | FK | 승인/처리 문서 |
-| **Attachment Section** | 고정된 사본 | 영향 없음 | 복제 테이블/JSON | 증빙/계약 문서 |
+| 유형 | 무리 | 개념 | 원본 수정 | DB 구현 | 사용 예시 |
+|------|------|------|-----------|---------|-----------|
+| **Main Section** | 정의 | 핵심 정보 섹션 | - | 주 테이블 (**새 엔티티**) | 문서 본문 |
+| **Child Section** | 정의 | 1:N 종속 섹션 | - | 자식 테이블 (**새 엔티티**, parent FK) | 자재 내역, 검사 항목 |
+| **Reference Section** | 투영 | 살아있는 링크 | 자동 반영 | 기존 엔티티로의 FK | 승인/처리 문서 |
+| **Attachment Section** | 투영 | 고정된 사본 | 영향 없음 | 복제 테이블/JSON | 증빙/계약 문서 |
 
 **선택 기준**: 실시간 동기화 필요 → Reference Section. 과거 시점 고정 필요 → Attachment Section.
+
+**정의와 투영의 구분**: 정의 섹션은 그 엔티티의 **출처**입니다 — 테이블이 이 서식 때문에 존재합니다. 투영 섹션은 이미 있는 엔티티에서 **그 맥락에 필요한 속성만 골라 옵니다.** 무엇을 골랐는가가 도메인 지식이며, 이것은 ERD에 적을 자리가 없는 정보입니다 ([방법론](methodology.md#정의하는-섹션과-투영하는-섹션)).
 
 #### Field (필드)
 
@@ -1738,13 +1740,17 @@ Section 내 **개별 입력 단위**. Field → Attribute(컬럼) 사상.
 
 ### 사상 규칙 요약
 
-| 규칙 | From | To |
-|------|------|-----|
-| 규칙 1 | Section | Entity (테이블) |
-| 규칙 2 | Field | Attribute (컬럼) |
-| 규칙 3 | Child Section | 1:N 관계 (parent FK) |
-| 규칙 4 | Reference Section | FK (실시간 동기화) |
-| 규칙 5 | Attachment Section | 복제 테이블/JSON (과거 고정) |
+| 규칙 | From | To | 무리 |
+|------|------|-----|------|
+| 규칙 1 | Main Section | **새 Entity** (주 테이블) | 정의 |
+| 규칙 2 | Field | Attribute (컬럼) | — |
+| 규칙 3 | Child Section | **새 Entity** + 1:N (parent FK) | 정의 |
+| 규칙 4 | Reference Section | **기존 Entity로의 FK** — 지금 참 | 투영 |
+| 규칙 5 | Attachment Section | **기존 Entity의 값 복사** — 그때 참 | 투영 |
+
+> **규칙 1은 Main Section에만 적용됩니다.** 모든 섹션이 테이블이 되는 것이 아닙니다. 정의하는 섹션(Main·Child)만 새 엔티티를 만들고, 투영하는 섹션(Reference·Attachment)은 이미 있는 엔티티에서 필요한 속성만 골라 옵니다 — [방법론 「정의하는 섹션과 투영하는 섹션」](methodology.md#정의하는-섹션과-투영하는-섹션).
+>
+> **규칙 4·5는 관계의 시간 결합 축을 규정합니다.** 관계의 **의미 축** — 무엇 다음에 무엇이 오는가, 무엇을 근거로 쓰였는가 — 는 섹션이 아니라 [흐름](methodology.md#2-문서의-흐름)이 공급합니다.
 
 ### 문서 분류 체계 (서/지/표/록)
 
