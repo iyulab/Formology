@@ -135,6 +135,11 @@ AI 시대가 열리면서 "지식 그래프", "온톨로지", "시맨틱 웹"이
 | **Competency Question** (Grüninger & Fox, TOVE) | 온톨로지가 답해야 할 질문을 먼저 정의하고, 그것이 범위를 결정 | **명제 1과 발상이 같다** — 목적이 정체성을 결정한다 | 질문을 정의하는 주체가 온톨로지 엔지니어이고, 형식논리로 표현되어 검증도 전문가 몫 |
 | **Ontology Learning from Text** | 텍스트에서 개념·관계 자동 추출 | 자동 도출을 지향 | 입력이 **비정형 산문**. Formology의 입력은 이미 구조화된 서식 |
 | **DDD** (온톨로지 진영은 아니나 자주 비교됨) | Entity·Aggregate에서 출발해 도메인 모델을 세움 | 도메인 언어를 중시 | 추상화가 **즉시** 요구되고 현업 참여가 인터뷰로 간접적. Formology는 점진적이고 직접적 |
+| **ORM/NIAM** · **FCO-IM** (사실 지향 모델링) | 도메인 전문가의 자연어 문장("기본 사실")을 검증·분류해 개념 스키마를 도출. FCO-IM은 한 걸음 더 나가 **커뮤니케이션 자체**(문서·대화의 사실 표현)만을 입력으로 삼는다 | **현업의 언어에서 출발**하고, 현업이 읽고 검증할 수 있는 문장을 단위로 삼는다. FCO-IM이 "문서"를 입력으로 든다는 점은 Formology와 가장 가깝다 | 입력이 **문장**이고, 그 문장을 분류하는 정보 분석가가 필수 주체. 도출되는 것은 "지금 참"인 구조뿐 — 참조/붙임의 시간 결합도, 서식 사이의 흐름도 표현 대상이 아니다 |
+| **UN/CEFACT CCTS** (Core Components) | 송장·주문 같은 **비즈니스 문서**를 위한 문법 중립 의미 빌딩블록(Core Component)과, 맥락을 적용한 BIE. 표준 레지스트리로 관리 | **비즈니스 문서가 출발점**이고, 문서 사이에 어휘를 재사용한다 | 어휘를 표준화 기구가 **미리** 정의하고 조직이 자기 문서를 거기에 맞춘다 — 방향이 반대. 자기 서식에서 도출하지 않고, 흐름은 문서 교환 프로토콜 바깥이다 |
+| **LinkML** | YAML로 쓴 스키마 하나에서 JSON Schema·OWL·SQL·문서를 생성. 스프레드시트 저작(Schemasheets)도 지원 | **하나의 선언에서 여러 산출물을 도출**한다는 형식이 Formology의 서식→스키마→온톨로지 도출과 닮았다 | **스키마를 먼저 쓴다**(schema-first). 저자가 모델러이고 입력이 스키마다 — 서식이 아니다. 시간 결합·흐름은 어휘에 없다 |
+| **Schema.org** `pending`→core 거버넌스 | 새 용어를 `pending`에 두고 사용·채택 실적에 따라 core로 승격하거나 폐기하는 어휘 운영 규칙 | **어휘는 사용에서 자란다** — 온톨로지가 결과물이라는 명제와 같은 방향 | 대상이 웹 공용 어휘이고 승격 주체가 운영위원회와 커뮤니티. 조직 내부 서식 어휘의 승격 규칙은 아니다(획득 어휘의 공유 승격을 설계할 때 참고할 **절차 선례**) |
+| **ODPS · DPDS** (데이터 제품 서술자) | 데이터 제품의 메타데이터 — 접근·품질·SLA·라이선스·가격(ODPS), 인프라부터 인터페이스까지의 서술자(DPDS) | 데이터에 "누가 소유하고 어떻게 제공하는가"를 **선언으로** 붙인다 | 이미 있는 데이터 제품의 **포장** 서술. 데이터가 어디서 왔는가(어떤 서식·문서가 낳았는가)는 묻지 않는다 |
 
 > **DDD와는 배타적이지 않습니다.** Formology로 시작해 구체적 서식을 모으고, 패턴이 드러난 뒤 DDD로 추상화하는 결합이 자연스럽습니다. 실제로 [사례 연구](casestudy.md)의 개발팀이 Sprint 3에서 발견한 추상 클래스들이 그 지점입니다.
 
@@ -156,8 +161,12 @@ Formology의 입력은 양쪽 다 아닙니다. **현업이 자기 손으로 만
 
 덧붙여, 온톨로지 공학 교과서 스스로가 비온톨로지 자원 재사용에 대해 *"어떻게 하는지에 대한 상세가 부족하다"*고 적고 있습니다. Formology는 그 빈 자리를 메우는 시도입니다 — 재사용 대상을 **서식**으로 특정하고, 절차를 **워크숍**으로 구체화했다는 점에서.
 
+표의 아래 다섯 행 — 구조 기술 계열(ORM/NIAM·FCO-IM, CCTS, LinkML)과 어휘·제품 거버넌스 계열(Schema.org, ODPS·DPDS) — 을 따로 묶어 보면 한 가지가 공통으로 비어 있습니다. **어느 쪽도 [참조와 붙임의 시간 결합](methodology.md#4-문서의-관계)이나 [서식 사이의 흐름 패턴](methodology.md#일곱-개의-패턴)을 표현 대상으로 갖지 않습니다.** 구조 기술 계열은 "지금 참"인 구조만 그리고, 거버넌스 계열은 어휘와 포장만 다룹니다. FK가 살아 있는 참조인지 그때의 스냅샷인지, 이 서식 다음에 어떤 서식이 오는지는 그들 어디에도 자리가 없습니다 — 서식이 원래부터 새겨 두는 두 가지 정보가, 서식을 입력으로 삼지 않는 순간 함께 사라집니다.
+
 여기까지는 **주체** — 누가 온톨로지로 옮기는가 — 에 관한 비판입니다. 설계된 온톨로지에는 주체와 별개로, 팀의 역량으로는 해소되지 않는 구조적 문제가 하나 더 있습니다 — [7장 「비대칭」](#비대칭--설계된-온톨로지가-혼자서는-할-수-없는-것).
 
+> 출처(추가 행): [Halpin, *Object-Role Modeling: an overview*](https://www.orm.net/pdf/ORMwhitePaper.pdf) · [Bakema, Zwart & van der Lek, *Fully Communication Oriented Information Modeling*](https://www.fco-im.nl/pdfFiles/FCO-IM%20book.pdf) · [UN/CEFACT, *Core Components Technical Specification* 3.0](https://www.unece.org/fileadmin/DAM/cefact/codesfortrade/CCTS/CCTS-Version3.pdf) · [LinkML](https://linkml.io/linkml/) · [Schema.org, *How we work*](https://schema.org/docs/howwework.html) · [Schema.org, *pending* section](https://schema.org/docs/pending.home.html) · [Open Data Products Standards Family](https://opendataproducts.org/) · [Data Product Descriptor Specification](https://dpds.opendatamesh.org/specifications/)
+>
 > 출처: [Keet, *An Introduction to Ontology Engineering*, 6.1](https://eng.libretexts.org/Bookshelves/Computer_Science/Programming_and_Computation_Fundamentals/An_Introduction_to_Ontology_Engineering_(Keet)/06:_Methods_and_Methodologies/6.01:_Methodologies_for_Ontology_Development) · [NeOn Methodology (OEG, UPM)](https://oeg.fi.upm.es/index.php/en/methodologies/59-neon-methodology/index.html) · [Suárez-Figueroa et al., *The NeOn Methodology for Ontology Engineering*](https://link.springer.com/chapter/10.1007/978-3-642-24794-1_2) · [Grüninger & Fox, *The Role of Competency Questions in Enterprise Engineering*](https://link.springer.com/chapter/10.1007/978-0-387-34847-6_3)
 
 ---
