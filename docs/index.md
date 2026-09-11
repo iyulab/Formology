@@ -25,7 +25,7 @@
 | **[도출 원리](derivation.md)** | 무엇으로 옮기나? | 사상 규칙 **정본**, 데이터 모델·API·인터페이스로의 사상, 저장·서비스 경계 | 개발자, 아키텍트 |
 | **[사례 연구](casestudy.md)** | 실제로 됐나? | 플라스틱 사출 공장 MES — 성과와 실패, 절차가 바뀐 지점 | 전체 |
 | **[자동 도출 원리](automation.md)** | 기계가 어떻게? | 도출 해상도, 투영 축적, 동형성 판정, 창발적 가이던스(미검증), 참조 아키텍처 | 도출 레이어 설계자 |
-| **[용어 사전](glossary.md)** | 용어 | FormType/Form/Document/Record, Section/Field, 명명 규칙 | 전체 |
+| **[용어 사전](glossary.md)** | 용어 | FormType/Form/Document/Record, 기록관리 표준 대응, Section/Field, 존재 근거(mandate), 명명 규칙 | 전체 |
 
 > **용어 정본**은 [용어 사전](glossary.md)입니다. `FormType(서식) / Form(양식) / Document(문서) / Record(레코드)` — 다른 표기가 보이면 오류입니다.
 >

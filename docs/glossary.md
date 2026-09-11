@@ -63,6 +63,20 @@ Document가 **데이터베이스에 저장된 형태**. 정의 섹션 → Entity
   Field: 항목        → column: item_name
 ```
 
+### 기록관리 표준과의 대응 (ISO 15489 · ISO 23081)
+
+이 용어 체계는 기록관리(records management) 표준과 **축이 다릅니다.** 표준은 정보가 *확정되어 증거로 유지되는가*로 document와 record를 가르고, Formology는 *진술인가 저장 형태인가*로 Document와 Record를 가릅니다. 그래서 이름은 겹치되 뜻은 엇갈립니다 — 기록관리 독자는 아래 표로 읽으십시오.
+
+| Formology | ISO 15489 / ISO 23081 | 비고 |
+|---|---|---|
+| **Document** — 확정된 진술, 고쳐 쓰지 않음, 감사 대상 | **record** | 표준의 *document*는 아직 확정되지 않은 정보입니다. Formology의 초안 상태 Document가 그쪽에 가깝습니다 |
+| **Record** — Document가 DB에 저장된 형태 | 대응어 없음 | 표준은 저장 형태를 별도 개념으로 두지 않습니다 |
+| 기재 주체 ([방법론](methodology.md#기재-주체--누가-이-칸을-채우는가)) | **agent** | |
+| 흐름 ([방법론](methodology.md#2-문서의-흐름)) | **business** (업무 활동) | |
+| **존재 근거(mandate)** — [아래](#존재-근거-mandate--시범) | **mandate** | ISO 23081-2의 네 엔티티 중 Formology에 없던 하나 |
+
+이름을 표준에 맞춰 바꾸지 않습니다. Formology의 `Document`/`Record`는 진술과 저장이라는 자기 축의 이름이고, 표준의 이름을 빌리면 `Record`가 갈 곳이 없습니다.
+
 ### 구조 분해
 
 #### Section (섹션)
@@ -108,6 +122,19 @@ Section 내 **개별 입력 단위**. Field → Attribute(컬럼) 사상.
 **특수 Field**: FileUpload (파일 경로), 자동채번 (시스템 생성), 자동 (로그인 유저 등)
 
 **핵심 규칙**: Reference Section 내의 Selection Field → FK (Foreign Key) 사상. Main Section의 Selection → ENUM 또는 일반 컬럼.
+
+### 존재 근거 (mandate) — 시범
+
+모든 FormType은 **존재 근거** 하나를 적습니다: 이 서식이 있어야 하는 이유. 값은 넷 중 하나입니다.
+
+| 존재 근거 | 뜻 | 예시 |
+|---|---|---|
+| 법령 | 법·규정이 작성을 요구한다 | 산업안전 점검일지 |
+| 계약 | 거래 상대와의 약속이 요구한다 | 거래명세서 |
+| 내규 | 조직이 스스로 정한 규칙이 요구한다 | 휴가신청서 |
+| 관행 | 아무도 정하지 않았는데 쓰고 있다 | — |
+
+**관행이 답이면 그 서식은 걷어낼 후보입니다.** [철학](philosophy.md)이 말하는 "아무도 걷어내지 않은 서식"이 정확히 이 칸이 비는 서식이고, 워크숍의 "안 쓰면 무슨 일이 생깁니까"가 이 칸을 채우는 질문입니다. 기록관리 표준(ISO 23081-2)이 record의 메타데이터에 mandate를 두는 이유도 같습니다. 이 슬롯은 시범입니다 — [분류의 세 축](methodology.md#분류의-세-축)을 늘리는 것이 아니라 FormType에 붙는 속성 하나입니다.
 
 ### 문서 분류 체계 (서/지/표/록)
 
@@ -190,7 +217,7 @@ Reference Section의 Selection Field는 FK로 구현됩니다."
 
 ### 체크리스트
 
-**FormType 정의**: 현업 실제 이름? 접미사 명확? 업무 역할 명확? 중복 없음?
+**FormType 정의**: 현업 실제 이름? 접미사 명확? 업무 역할 명확? 중복 없음? 존재 근거(mandate) 적었는가 — 관행이면 걷어낼 후보?
 
 **Form 설계**: Section 유형 명확? Main Section 1개 이상? Child 1:N 명확? Reference=실시간? Attachment=과거 고정? Field 유형 적절? Selection=FK?
 
