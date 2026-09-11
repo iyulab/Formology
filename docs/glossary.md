@@ -158,6 +158,12 @@ Section 내 **개별 입력 단위**. Field → Attribute(컬럼) 사상.
 변경 이력 추적. 시간순 누적 기록. Append-only (삭제/수정 불가).
 예시: 불량이력록, 변경이력록, 승인이력록, 접근이력록.
 
+### 역량질문 (Competency Question)
+
+도출된 구조가 **답할 수 있어야 하는 질문**. 온톨로지 방법론(NeOn 계열)의 표준 검증 단위이며, Formology에서는 새 개념이 아니라 이미 있는 것의 이름입니다 — 워크숍에서 스케치하지 않고 "무엇을 보고 싶은지만" 적고 넘어간 **2차 문서(표·집계·이력록) 한 줄이 곧 역량질문 하나**입니다. "재고현황표 — 입고확인서와 출고확인서를 모아 본다"는 *"이 구조로 품목별 현재고를 낼 수 있는가?"* 입니다.
+
+산출물로 보존하고([워크숍 3.7](workshop.md#37-역량질문-목록-2차-문서-목록)), 도출이 끝난 뒤 하나씩 답합니다([도출 원리 §1.9](derivation.md#19-품질-체크리스트)). 양식 스케치와 ERD는 구조가 양식에 충실한지를 말하고, 역량질문만 구조가 쓸모 있는지를 말합니다.
+
 ### 명명 규칙
 
 #### FormType 명명
@@ -221,7 +227,7 @@ Reference Section의 Selection Field는 FK로 구현됩니다."
 
 **Form 설계**: Section 유형 명확? Main Section 1개 이상? Child 1:N 명확? Reference=실시간? Attachment=과거 고정? Field 유형 적절? Selection=FK?
 
-**Record 사상**: Section→Entity 명확? Field→Attribute 명확? FK 정의? 1:N parent_id? snake_case? 필수/선택 제약?
+**Record 사상**: Section→Entity 명확? Field→Attribute 명확? FK 정의? 1:N parent_id? snake_case? 필수/선택 제약? 보존된 역량질문에 전부 답할 수 있는가?
 
 ---
 
