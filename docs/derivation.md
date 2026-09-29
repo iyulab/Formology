@@ -82,7 +82,7 @@ Order (1)
 | [입력] | VARCHAR, TEXT | - |
 | [숫자] | INTEGER, DECIMAL | - |
 | [날짜] | DATE, TIMESTAMP | - |
-| [선택] | FK 또는 ENUM | NOT NULL |
+| [선택] | FK (마스터에서 선택) 또는 ENUM (고정 선택지) — [마스터-트랜잭션 패턴](#마스터-트랜잭션-패턴)의 "어디서 선택?" | NOT NULL |
 | [체크박스] | BOOLEAN | - |
 | 본질적 | (위 타입) | NOT NULL |
 | 부가적 | (위 타입) | NULLABLE |
@@ -414,7 +414,7 @@ CREATE TABLE defect_attachments (
 | Text | VARCHAR/TEXT | `document_no VARCHAR(50)` |
 | Numeric | INTEGER/DECIMAL | `quantity INTEGER` |
 | Date/Time | DATE/TIMESTAMP | `created_at TIMESTAMP` |
-| Selection (Single) | FK | `product_id FK` |
+| Selection (Single) | FK (마스터에서 선택) 또는 ENUM (고정 선택지) — §1.3 "어디서 선택?" | `product_id FK` · `priority ENUM('높음','보통','낮음')` |
 | Selection (Multiple) | 1:N 테이블 | `qc_items` |
 | Boolean | BOOLEAN | `is_urgent BOOLEAN` |
 

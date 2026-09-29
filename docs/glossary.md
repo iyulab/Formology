@@ -115,13 +115,13 @@ Section 내 **개별 입력 단위**. Field → Attribute(컬럼) 사상.
 
 | Field 유형 | 설명 | DB 타입 |
 |-----------|------|---------|
-| Selection | 단일 선택 (드롭다운) | VARCHAR (FK) |
+| Selection | 단일 선택 (드롭다운) | FK 또는 ENUM — 선택지의 출처가 가른다 |
 | Radio | 단일 선택 (라디오) | ENUM |
 | Checklist | 다중 선택 | JSON, M:N 테이블 |
 
 **특수 Field**: FileUpload (파일 경로), 자동채번 (시스템 생성), 자동 (로그인 유저 등)
 
-**핵심 규칙**: Reference Section 내의 Selection Field → FK (Foreign Key) 사상. Main Section의 Selection → ENUM 또는 일반 컬럼.
+**핵심 규칙**: Selection의 사상은 섹션이 아니라 **"어디서 선택하는가?"** 가 가릅니다([도출 원리 — 마스터-트랜잭션 패턴](derivation.md#마스터-트랜잭션-패턴)). 다른 서식이나 마스터 목록에서 고르면 FK, 서식 자신이 고정된 선택지를 정하면 ENUM입니다. Reference Section의 Selection은 정의상 다른 엔티티에서 고르므로 항상 FK이고, Main Section의 Selection은 이 문답으로 FK와 ENUM 중 하나가 됩니다.
 
 ### 존재 근거 (mandate) — 시범
 
