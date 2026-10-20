@@ -84,6 +84,7 @@ Order (1)
 | [날짜] | DATE, TIMESTAMP | - |
 | [선택] | FK (마스터에서 선택) 또는 ENUM (고정 선택지) — [마스터-트랜잭션 패턴](#마스터-트랜잭션-패턴)의 "어디서 선택?" | NOT NULL |
 | [체크박스] | BOOLEAN | - |
+| [측정값] — 수치와 정성 값이 섞임 | 선택형: 수치 칸 + 텍스트 칸, 둘 다 NULLABLE, 행마다 하나만 채움 | CHECK (둘 중 정확히 하나) |
 | 본질적 | (위 타입) | NOT NULL |
 | 부가적 | (위 타입) | NULLABLE |
 
@@ -417,6 +418,9 @@ CREATE TABLE defect_attachments (
 | Selection (Single) | FK (마스터에서 선택) 또는 ENUM (고정 선택지) — §1.3 "어디서 선택?" | `product_id FK` · `priority ENUM('높음','보통','낮음')` |
 | Selection (Multiple) | 1:N 테이블 | `qc_items` |
 | Boolean | BOOLEAN | `is_urgent BOOLEAN` |
+| 측정값 (수치·정성 혼합) | 선택형 값 — 수치 컬럼 + 텍스트 컬럼, 행마다 하나 | `value_num DECIMAL NULL` · `value_text VARCHAR NULL` · `CHECK ((value_num IS NULL) <> (value_text IS NULL))` |
+
+**측정값 칸에 수치와 정성 값이 섞이는 경우.** 점검표 한 장에서 어떤 항목은 "12.3"(압력)이고 어떤 항목은 "정상"·"없음"입니다. 수치 컬럼 하나로 받으면 정성 행이 들어갈 자리가 없고, 텍스트 하나로 받으면 수치 비교·집계를 잃습니다. 같은 값을 두 번 들고 있는 "텍스트 + 수치 파생 컬럼"도 피합니다. 표준이 쓰는 꼴은 **선택형 값**입니다 — 의료 데이터 표준 FHIR의 관측값(`Observation.value[x]`)이 수치·문자열·코드 가운데 하나를 고르는 것과 같습니다. 행마다 그 행의 값에 맞는 칸 하나를 채웁니다.
 
 ### 2.5 관계와 시간 결합의 구현
 
@@ -559,7 +563,7 @@ Section-Field 구조가 명확하면 정규화는 자연스럽게 따라옵니�
 1. 워크숍 → 문서 양식 스케치
 2. 패턴 인식 → [선택]=FK, [입력]=컬럼, 체크박스=1:N, 참조=FK(최신), 붙임=파일 테이블
 3. 관계 도출 → A→B=부모-자식, "그때"=스냅샷
-4. 접미어 패턴 → -서=승인, -지=이력, -표=집계 뷰, -록=시계열 파티션
+4. 분류 축 → 생성 방식(1차=테이블 · 2차=뷰/질의) · 목적(요청·지시=승인 흐름) — 접미어는 축의 한국어 실현이지 판정 기준이 아님
 5. DDL 생성 → CREATE TABLE/INDEX/TRIGGER/VIEW
 6. 현업 검증 → "이 테이블이 OO 문서죠?" "맞아요!"
 
@@ -593,14 +597,14 @@ Section-Field 구조가 명확하면 정규화는 자연스럽게 따라옵니�
 
 ### 3.1 핵심 원칙
 
-> 아래는 **REST를 예로 든 것**입니다. 원리는 *서식 접미어가 동작 패턴을 결정한다*이며, 이는 RPC든 메시지 기반이든 동일하게 성립합니다. 프로토콜 선택은 구현체의 몫입니다.
+> 아래는 **REST를 예로 든 것**입니다. 원리는 *서식의 분류 축 — 목적과 생성 방식 — 이 동작 패턴을 결정한다*이며, 이는 RPC든 메시지 기반이든 동일하게 성립합니다. 프로토콜 선택은 구현체의 몫입니다. 아래의 접미사별 묶음은 축의 대표적인 한국어 실현으로 정리한 것이고, 판정은 [축](methodology.md#분류의-세-축)으로 합니다 — 록이 1차와 2차로 갈리는 것이 그 이유입니다.
 
 ```
 서식(FormType)     = API 리소스 (Resource)
 양식(Form) 구조    = API 스키마 (Schema)
 문서(Document)     = 리소스 인스턴스 (Resource Instance)
 문서 흐름          = API 엔드포인트 조합
-서식 접미사        = API 동작 패턴
+분류 축(목적·생성 방식) = API 동작 패턴
 ```
 
 ### 3.2 REST 리소스 매핑
@@ -646,12 +650,13 @@ GET    /resource/export   # Excel/PDF 다운로드
 ```yaml
 # 1차 (회의록·대장처럼 사람이 쓰는 것)
 POST   /resource          # 신규 등록
-PUT    /resource/:id      # 수정
-GET    /resource/:id      # 조회
+POST   /resource/:id/corrections  # 정정 — 덮어쓰지 않고 정정 기록을 덧붙인다
+GET    /resource/:id      # 조회 (정정이 반영된 현재)
+GET    /resource/:id/history      # 정정 이력
 GET    /resource          # 목록 (필터링, 페이징)
 
 # 2차 (이력록처럼 축적에서 계산되는 것)
-GET    /resource          # 조회만. append-only이므로 수정·삭제 없음
+GET    /resource          # 조회만 — 원천 문서에서 계산되므로 직접 고치지 않는다. 원천을 고친다
 ```
 
 ---
