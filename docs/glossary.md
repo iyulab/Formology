@@ -121,7 +121,7 @@ Section 내 **개별 입력 단위**. Field → Attribute(컬럼) 사상.
 |-----------|------|---------|
 | Selection | 단일 선택 (드롭다운) | FK 또는 ENUM — 선택지의 출처가 가른다 |
 | Radio | 단일 선택 (라디오) | ENUM |
-| Checklist | 다중 선택 | JSON, M:N 테이블 |
+| Checklist | 다중 선택 | 1:N 테이블 — 고른 선택지 하나가 한 행 (마스터에서 고르면 FK, 곧 마스터와의 M:N) |
 
 **특수 Field**: FileUpload (파일 경로), 자동채번 (시스템 생성), 자동 (로그인 유저 등)
 

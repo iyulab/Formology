@@ -302,9 +302,10 @@ Form / Document
       ├─ Text → VARCHAR/TEXT
       ├─ Numeric → INTEGER/DECIMAL
       ├─ Date/Time → DATE/TIMESTAMP
-      ├─ Selection → FK
+      ├─ Selection → FK 또는 ENUM ("어디서 선택하는가?")
+      ├─ Selection (여럿) → 1:N 테이블
       ├─ Boolean → BOOLEAN
-      └─ File → VARCHAR (경로)
+      └─ File → 파일 테이블 (붙임과 같이)
 ```
 
 ### 정의하는 섹션과 투영하는 섹션
