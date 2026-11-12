@@ -1,6 +1,6 @@
 # 용어 사전
 
-**이 문서가 용어 정본입니다.** 다른 문서에서 다른 표기가 보이면 오류입니다.
+> **성격**: 해설. 용어의 **정의**는 [명세 2 · 3장](specification.md#2-용어)이 정본이고, 이 문서는 그 풀이와 사용법입니다. 표기는 여기 적힌 대로 — 다른 문서에서 다른 표기가 보이면 오류입니다.
 
 ---
 
@@ -20,13 +20,13 @@ Form = Section[] + Field[]
 
 #### L0: FormType (서식 개념)
 
-업무에서 사용하는 **문서의 추상적 개념**. 모양 없는 순수 개념. 현업이 "우리는 이런 서식 씁니다"라고 부르는 이름. 1개 FormType → N개 Form (1:N).
+업무에서 사용하는 **문서의 종류**. 현업이 "우리는 이런 서식 씁니다"라고 부르는 이름. 서식이 개정될 때마다 Form이 하나씩 생깁니다 — 1개 FormType → N개 Form (1:N).
 
 예시: "작업지시서", "품질검사의뢰서", "설비점검일지", "월별생산현황표"
 
 #### L1: Form (양식 구조)
 
-FormType의 **구체적 Section/Field 구조**. 모양이 있는 구체적 레이아웃. Section과 Field로 구성. 동일 FormType의 버전별/부서별 양식이 존재할 수 있음.
+FormType의 **한 판(version)의 Section/Field 구조**. 서식이 개정되면 새 Form이 생깁니다. 같은 Form을 PC 화면 · 태블릿 · 인쇄물로 다르게 보이는 것은 **표현**이지 Form이 아닙니다.
 
 ```
 Form 예시:
@@ -35,7 +35,7 @@ Form 예시:
 │  문서번호: [자동채번] Field  │
 ├─────────────────────────────┤
 │ [Main Section] 본문         │
-│  제품명: [Selection] Field  │ ← Reference Section
+│  제품명: [Selection] Field  │ ← 제품 마스터에서 고름
 │  수량: [Numeric] Field      │
 ├─────────────────────────────┤
 │ [Child Section] 상세 (1:N)  │
@@ -45,15 +45,15 @@ Form 예시:
 
 #### L2: Document (문서 인스턴스)
 
-유저가 **실제로 작성한 Form의 인스턴스**. Field에 데이터가 채워진 상태. 문서 ID와 고유 상태(초안/제출/승인 등)를 가짐.
+유저가 **실제로 작성해 확정한 Form의 인스턴스**. Field에 데이터가 채워진 상태. 문서 식별자, 기록 식별자(무엇에 관한 진술인가), 쓰인 Form(어느 판인가)을 가집니다. 확정된 Document는 고쳐 쓰지 않습니다 — 정정은 같은 기록 식별자의 새 Document입니다.
 
 예시: 작업지시서 #WO-2024-001 (초안), #WO-2024-002 (승인됨)
 
-Document 생명주기: 생성 → 초안 → 제출 → 승인 → 완료 → 보관
+진행 단계(초안 → 제출 → 승인 → 완료)는 Document에 박힌 값이 아니라 **그 건에 쌓인 Document들에서 읽히는 값**입니다 — 승인은 승인 문서가 생긴 것입니다([명세 규칙 18](specification.md#44-흐름)).
 
 #### L3: Record (레코드)
 
-Document가 **데이터베이스에 저장된 형태**. 정의 섹션 → Entity(테이블), Field → Attribute(컬럼), 투영 섹션 → 기존 Entity로의 FK 또는 값 복사.
+Document들에서 **도출된 저장 형태**. 정의 섹션 → Entity(테이블), Field → Attribute(컬럼), 투영 섹션 → 기존 Entity로의 관계 또는 그때 값의 고정. 같은 기록 식별자를 가진 Document 가운데 가장 나중 것이 Record의 현재 값을 정하고, Record는 Document로부터 언제든 다시 만들 수 있습니다.
 
 ```
 [Main Section]        → main_table
@@ -73,7 +73,7 @@ Document가 **데이터베이스에 저장된 형태**. 정의 섹션 → Entity
 | **Record** — Document가 DB에 저장된 형태 | 대응어 없음 | 표준은 저장 형태를 별도 개념으로 두지 않습니다 |
 | 기재 주체 ([방법론](methodology.md#기재-주체--누가-이-칸을-채우는가)) | **agent** | |
 | 흐름 ([방법론](methodology.md#2-문서의-흐름)) | **business** (업무 활동) | |
-| **존재 근거(mandate)** — [아래](#존재-근거-mandate--시범) | **mandate** | ISO 23081-2의 네 엔티티 중 Formology에 없던 하나 |
+| **존재 근거(mandate)** — [아래](#존재-근거-mandate) | **mandate** | ISO 23081-2의 네 엔티티 중 Formology에 없던 하나 |
 
 이름을 표준에 맞춰 바꾸지 않습니다. Formology의 `Document`/`Record`는 진술과 저장이라는 자기 축의 이름이고, 표준의 이름을 빌리면 `Record`가 갈 곳이 없습니다.
 
@@ -89,12 +89,12 @@ Form을 구성하는 **의미 단위 그룹**. 엔티티 경계를 결정하는 
 
 **4가지 Section 유형**:
 
-| 유형 | 무리 | 개념 | 원본 수정 | DB 구현 | 사용 예시 |
+| 유형 | 무리 | 개념 | 원본 수정 | DB 구현 (예) | 사용 예시 |
 |------|------|------|-----------|---------|-----------|
-| **Main Section** | 정의 | 핵심 정보 섹션 | - | 주 테이블 (**새 엔티티**) | 문서 본문 |
+| **Main Section** | 정의 | 주 엔티티의 칸 묶음 (여럿일 수 있음) | - | 주 테이블의 컬럼들 | 문서 본문 |
 | **Child Section** | 정의 | 1:N 종속 섹션 | - | 자식 테이블 (**새 엔티티**, parent FK) | 자재 내역, 검사 항목 |
 | **Reference Section** | 투영 | 살아있는 링크 | 자동 반영 | 기존 엔티티로의 FK | 승인/처리 문서 |
-| **Attachment Section** | 투영 | 고정된 사본 | 영향 없음 | 복제 테이블/JSON | 증빙/계약 문서 |
+| **Attachment Section** | 투영 | 그때 값의 고정 | 영향 없음 | 구현체가 정함 — 바뀌지 않고 출처를 가리킬 것 | 증빙/계약 문서 |
 
 **선택 기준**: 실시간 동기화 필요 → Reference Section. 과거 시점 고정 필요 → Attachment Section.
 
@@ -104,30 +104,23 @@ Form을 구성하는 **의미 단위 그룹**. 엔티티 경계를 결정하는 
 
 Section 내 **개별 입력 단위**. Field → Attribute(컬럼) 사상.
 
-**기본 입력 Field**:
+Field가 갖는 **값 종류**는 아홉입니다. 정의는 [명세 3.4](specification.md#34-칸-field)에 있고, 아래 표는 그 풀이입니다 — DB 타입은 예시입니다.
 
-| Field 유형 | 설명 | DB 타입 |
-|-----------|------|---------|
-| Text | 단행 텍스트 | VARCHAR |
-| TextArea | 다행 텍스트 | TEXT |
-| Numeric | 숫자 | INTEGER, DECIMAL |
-| Date | 날짜 | DATE |
-| Time | 시간 | TIME, TIMESTAMP |
-| Checkbox | 단일 체크 | BOOLEAN |
-
-**선택 입력 Field**:
-
-| Field 유형 | 설명 | DB 타입 |
-|-----------|------|---------|
-| Selection | 단일 선택 (드롭다운) | FK 또는 ENUM — 선택지의 출처가 가른다 |
-| Radio | 단일 선택 (라디오) | ENUM |
-| Checklist | 다중 선택 | 1:N 테이블 — 고른 선택지 하나가 한 행 (마스터에서 고르면 FK, 곧 마스터와의 M:N) |
-
-**특수 Field**: FileUpload (파일 경로), 자동채번 (시스템 생성), 자동 (로그인 유저 등)
+| 값 종류 | 서식에서의 모습 | DB 타입 (예) |
+|---|---|---|
+| 글 | 한 줄 입력, 여러 줄 입력 | VARCHAR, TEXT |
+| 수 | 숫자 입력 | INTEGER, DECIMAL |
+| 날짜 · 시각 | 날짜, 시각 | DATE, TIME, TIMESTAMP |
+| 예/아니오 | 체크 하나 | BOOLEAN |
+| 선택 | 드롭다운, 라디오 — 하나를 고름 | FK 또는 ENUM — 선택지의 출처가 가른다 |
+| 다중 선택 | 체크박스 묶음 — 여럿을 고름 | 1:N 테이블 — 고른 선택지 하나가 한 행 |
+| 측정값 | 수치이거나 정성 값("정상") | 수치 컬럼 + 글 컬럼, 행마다 하나 |
+| 파일 | 붙인 파일 | 파일 저장소 + 경로 |
+| 자동 | 채번, 작성자, 작성 시각 | 시스템 생성 |
 
 **핵심 규칙**: Selection의 사상은 섹션이 아니라 **"어디서 선택하는가?"** 가 가릅니다([도출 원리 — 마스터-트랜잭션 패턴](derivation.md#마스터-트랜잭션-패턴)). 다른 서식이나 마스터 목록에서 고르면 FK, 서식 자신이 고정된 선택지를 정하면 ENUM입니다. Reference Section의 Selection은 정의상 다른 엔티티에서 고르므로 항상 FK이고, Main Section의 Selection은 이 문답으로 FK와 ENUM 중 하나가 됩니다.
 
-### 존재 근거 (mandate) — 시범
+### 존재 근거 (mandate)
 
 모든 FormType은 **존재 근거** 하나를 적습니다: 이 서식이 있어야 하는 이유. 값은 넷 중 하나입니다.
 
@@ -138,7 +131,7 @@ Section 내 **개별 입력 단위**. Field → Attribute(컬럼) 사상.
 | 내규 | 조직이 스스로 정한 규칙이 요구한다 | 휴가신청서 |
 | 관행 | 아무도 정하지 않았는데 쓰고 있다 | — |
 
-**관행이 답이면 그 서식은 걷어낼 후보입니다.** [철학](philosophy.md)이 말하는 "아무도 걷어내지 않은 서식"이 정확히 이 칸이 비는 서식이고, 워크숍의 "안 쓰면 무슨 일이 생깁니까"가 이 칸을 채우는 질문입니다. 기록관리 표준(ISO 23081-2)이 record의 메타데이터에 mandate를 두는 이유도 같습니다. 이 슬롯은 시범입니다 — [분류의 세 축](methodology.md#분류의-세-축)을 늘리는 것이 아니라 FormType에 붙는 속성 하나입니다.
+**관행이 답이면 그 서식은 걷어낼 후보입니다.** [철학](philosophy.md)이 말하는 "아무도 걷어내지 않은 서식"이 정확히 이 칸이 비는 서식이고, 워크숍의 "안 쓰면 무슨 일이 생깁니까"가 이 칸을 채우는 질문입니다. 기록관리 표준(ISO 23081-2)이 record의 메타데이터에 mandate를 두는 이유도 같습니다. [분류의 세 축](methodology.md#분류의-세-축)을 늘리는 것이 아니라 FormType에 붙는 속성 하나입니다([명세 3.8](specification.md#38-존재-근거)).
 
 ### 문서 분류 체계 (서/지/표/록)
 
@@ -233,7 +226,7 @@ Reference Section의 Selection Field는 FK로 구현됩니다."
 
 **FormType 정의**: 현업 실제 이름? 접미사 명확? 업무 역할 명확? 중복 없음? 존재 근거(mandate) 적었는가 — 관행이면 걷어낼 후보?
 
-**Form 설계**: Section 유형 명확? Main Section 1개 이상? Child 1:N 명확? Reference=실시간? Attachment=과거 고정? Field 유형 적절? Selection=FK?
+**Form 설계**: Section 유형 명확? Main Section 1개 이상(여럿이어도 엔티티는 하나)? Child 1:N 명확? Reference=지금 값? Attachment=그때 값? 정하지 못한 칸은 미결정으로 남겼는가? Field 값 종류 적절? Selection의 출처를 물었는가?
 
 **Record 사상**: Section→Entity 명확? Field→Attribute 명확? FK 정의? 1:N parent_id? snake_case? 필수/선택 제약? 보존된 역량질문에 전부 답할 수 있는가?
 

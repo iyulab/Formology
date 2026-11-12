@@ -2,7 +2,7 @@
 
 > **이 저장소의 유일한 실측 출처입니다.** 다른 문서의 수치는 전부 이 장을 가리키거나, 출처가 없어 삭제되었습니다.
 
-> 용어 정본: [용어 사전](glossary.md). `FormType(서식) / Form(양식) / Document(문서) / Record(레코드)`
+> **성격**: 해설. 규칙과 용어 정의의 정본은 [명세](specification.md)입니다. 용어 풀이: [용어 사전](glossary.md). `FormType(서식) / Form(양식) / Document(문서) / Record(레코드)`
 
 ---
 
@@ -85,7 +85,7 @@ MVP 7개: 작업지시서, 일일생산일지, 품질검사의뢰서,
 
 일일생산일지 → Main Section → production_logs
   ├─ Reference Section → work_orders (FK)
-  ├─ Child Section → defect_occurrences (M:N)
+  ├─ Child Section → defect_occurrences (1:N — 행마다 불량 유형을 마스터에서 고름)
   └─ FileUpload → production_attachments (1:N)
 ```
 

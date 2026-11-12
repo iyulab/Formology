@@ -2,9 +2,9 @@
 
 > **"양식의 구조는 그대로 데이터 구조가 된다"**
 
-문서에서 데이터 모델·API·인터페이스가 어떻게 도출되는지를 다루는 **기술 중립적 원리** 문서입니다. 이것이 사상 규칙의 **정본**입니다.
+문서에서 데이터 모델·API·인터페이스가 어떻게 도출되는지를 다루는 **기술 중립적 원리** 문서입니다. 규칙의 문구는 [명세 4장](specification.md#4-규칙)이 정본이고, 이 문서는 그 규칙이 실제 스키마에서 **어떤 모양이 되는지**를 예시로 보입니다.
 
-> 용어 정본: [용어 사전](glossary.md). `FormType(서식) / Form(양식) / Document(문서) / Record(레코드)`
+> **성격**: 해설. 규칙과 용어 정의의 정본은 [명세](specification.md)입니다. 용어 풀이: [용어 사전](glossary.md). `FormType(서식) / Form(양식) / Document(문서) / Record(레코드)`
 
 **핵심 원칙**:
 1. **기술 중립성** — 특정 기술에 종속되지 않는 보편적 원리
@@ -39,7 +39,7 @@
 
 #### 양식 → 엔티티
 
-**규칙**: 하나의 양식 = 하나의 주요 엔티티
+**규칙**: 하나의 서식 = 하나의 주 엔티티 ([규칙 1](specification.md#41-구조))
 
 ```
 [양식]                [엔티티]
@@ -50,9 +50,9 @@
 └─ 수량               └─ quantity
 ```
 
-**예외**:
-- 복합 문서: 여러 엔티티로 분해
-- 섹션이 많은 문서: 정규화 고려
+**덧붙여**:
+- Main 섹션이 여럿이어도 엔티티는 하나입니다 — 섹션은 그 엔티티의 칸 묶음입니다
+- 되풀이되는 행은 Child 섹션이고, 그것은 따로 엔티티가 됩니다 (아래)
 
 #### 섹션 → 엔티티 분해
 
@@ -77,17 +77,19 @@ Order (1)
 
 #### 필드 → 속성
 
-| 필드 유형 | 데이터 타입 | 제약조건 |
-|-----------|-------------|----------|
-| [입력] | VARCHAR, TEXT | - |
-| [숫자] | INTEGER, DECIMAL | - |
-| [날짜] | DATE, TIMESTAMP | - |
-| [선택] | FK (마스터에서 선택) 또는 ENUM (고정 선택지) — [마스터-트랜잭션 패턴](#마스터-트랜잭션-패턴)의 "어디서 선택?" | NOT NULL |
-| [체크박스] 하나 (예/아니오) | BOOLEAN | - |
-| [체크박스] 묶음 (여럿 고름) | 1:N 테이블 — 고른 선택지 하나가 한 행, 값은 [선택]과 같이 FK 또는 ENUM | - |
-| [측정값] — 수치와 정성 값이 섞임 | 선택형: 수치 칸 + 텍스트 칸, 둘 다 NULLABLE, 행마다 하나만 채움 | CHECK (둘 중 정확히 하나) |
-| 본질적 | (위 타입) | NOT NULL |
-| 부가적 | (위 타입) | NULLABLE |
+| 값 종류 | 데이터 타입 (예) | 비고 |
+|---------|------------------|------|
+| 글 | VARCHAR, TEXT | |
+| 수 | INTEGER, DECIMAL | |
+| 날짜 · 시각 | DATE, TIME, TIMESTAMP | |
+| 예/아니오 — 체크 하나 | BOOLEAN | |
+| 선택 — 하나를 고름 | FK (다른 서식 · 목록에서 고름) 또는 ENUM (서식이 선택지를 고정) | [마스터-트랜잭션 패턴](#마스터-트랜잭션-패턴)의 "어디서 선택?" — 규칙 8 |
+| 다중 선택 — 여럿을 고름 | 1:N 테이블 — 고른 선택지 하나가 한 행 | 고르지 않은 것은 행이 되지 않는다 — 규칙 9 |
+| 측정값 — 수치와 정성 값이 섞임 | 수치 컬럼 + 글 컬럼, 둘 다 NULLABLE | CHECK (둘 중 정확히 하나) — 규칙 10 |
+| 파일 | 파일 저장소 + 경로 | 붙임과 같이 |
+| 자동 — 채번 · 작성자 · 작성 시각 | 시스템 생성 | |
+
+값 종류와 별개로, 칸이 **본질적**이면 NOT NULL, **부가적**이면 NULLABLE이 됩니다([요소 삼분론](philosophy.md#요소-삼분론)). 값 종류의 정의는 [명세 3.4](specification.md#34-칸-field)에 있습니다 — 이 표는 그 풀이이며, 같은 표를 다른 문서에 다시 두지 않습니다.
 
 ### 1.3 관계 사상
 
@@ -108,21 +110,16 @@ Order (1)
 ```
 양식: 문서 A --붙임--> 문서 B의 사본
   ↓
-구현: Entity_A.attached_b_snapshot (JSON/별도 테이블)
+구현: Entity_A가 B의 그때 값을 갖고, 그것이 B에서 왔음을 가리킨다
 ```
 
-- 값 복사 또는 스냅샷
-- 독립적 생명주기, 원본 변경 무관
+- 고정 이후 원본이 바뀌어도 바뀌지 않는다
+- 어디서 왔는지를 가리킨다 (출처)
+- 저장 방식(값 복사 · 별도 테이블 · JSON)은 구현체가 정한다
 
-#### 스냅샷 (Snapshot) — 버전 관리
+#### 붙임의 고정 시점
 
-```
-양식: 문서 A --스냅샷--> 문서 B@시점T
-  ↓
-구현: Entity_A_Snapshot (버전 테이블)
-```
-
-- 시점별 조회, 이력 추적
+붙임은 "그때 값"이고, 그때가 언제인지는 서식이 정합니다 — 작성 · 승인 · 주기 · 사건([방법론 「고정 시점」](methodology.md#고정-시점--붙임은-언제-굳는가)). 같은 원본을 여러 시점에 굳혀 두면 시점별 조회와 이력 추적이 됩니다. 흔히 스냅샷이라 부르는 것이 이것이며, 별개의 관계가 아니라 **고정 시점을 달리 잡은 붙임**입니다.
 
 #### 마스터-트랜잭션 패턴
 
@@ -149,7 +146,9 @@ Order (1)
      state_changed_by UUID
 ```
 
-**필수 속성**: 상태 필드, 상태 변경 시각, 상태 변경자
+**상태를 저장한다면 함께 둘 것**: 상태 필드, 상태 변경 시각, 상태 변경자
+
+> 상태 칸은 **편의**이지 원천이 아닙니다. 전이는 문서로 일어나고([방법론 「일곱 개의 패턴」](methodology.md#일곱-개의-패턴)), 저장된 상태는 그 건에 쌓인 문서로부터 다시 계산할 수 있어야 합니다([규칙 18](specification.md#44-흐름)). 위 `submitted` · `approved`는 각각 제출 · 승인 문서가 생겼다는 사실의 요약입니다.
 
 **기본 시점 필드**:
 ```
@@ -202,12 +201,12 @@ approved_at   : 승인 시각 (해당 시)
 
 설문 방법론(응답 거부 · 해당 없음을 가르는 결측 코드)과 의료 서식 표준(조건으로 숨은 문항은 응답에 없음)이 같은 구분을 합니다.
 
-**규칙.**
+**풀이** — 규범 문구는 [명세 규칙 11](specification.md#42-값)에 있습니다.
 
-1. **고르지 않음은 빈 목록이다.** 체크박스 묶음에서 아무것도 고르지 않은 것은 "고른 것이 없다"는 답입니다 — 1:N 테이블에 행이 없고, 부모 문서에는 빈 목록이 남습니다.
-2. **그 판 서식에 없던 칸은 칸이 없다.** 그런 문서에는 그 칸 자체가 없어야 하고, 빈 값으로 채우지 않습니다. 빈칸과 없는 칸은 다른 사실입니다.
-3. **안 씀은 값이 없다(NULL).** 값을 지어 채우지 않습니다 — 기본값은 업무가 정하지 않은 것을 정한 것처럼 보이게 합니다.
-4. **기록은 입력이 가르는 만큼만 가른다.** 조건부로 안 보인 칸과 비운 칸을 서식 도구가 같은 모양으로 넘긴다면 저장도 둘을 가를 수 없습니다. 그때는 둘이 섞였다고 말하고(예: "이 칸의 빈 값에는 조건부로 안 보인 경우가 섞여 있다"), 가를 수 있는 것처럼 꾸미지 않습니다.
+- **고르지 않음은 빈 목록이다.** 체크박스 묶음에서 아무것도 고르지 않은 것은 "고른 것이 없다"는 답입니다 — 1:N 테이블에 행이 없고, 부모 문서에는 빈 목록이 남습니다.
+- **그 판 서식에 없던 칸은 칸이 없다.** 그런 문서에는 그 칸 자체가 없어야 하고, 빈 값으로 채우지 않습니다. 빈칸과 없는 칸은 다른 사실입니다.
+- **안 씀은 값이 없다(NULL).** 값을 지어 채우지 않습니다 — 기본값은 업무가 정하지 않은 것을 정한 것처럼 보이게 합니다.
+- **기록은 입력이 가르는 만큼만 가른다.** 조건부로 안 보인 칸과 비운 칸을 서식 도구가 같은 모양으로 넘긴다면 저장도 둘을 가를 수 없습니다. 그때는 둘이 섞였다고 말하고(예: "이 칸의 빈 값에는 조건부로 안 보인 경우가 섞여 있다"), 가를 수 있는 것처럼 꾸미지 않습니다.
 
 역량질문("미점검 항목이 몇 건인가?")이 이 구분을 요구한다면, 구분을 남기는 쪽은 서식 도구입니다 — 저장은 받은 것을 정직하게 남길 뿐입니다.
 
@@ -219,7 +218,7 @@ approved_at   : 승인 시각 (해당 시)
 |------|------|--------|
 | 1단계 | 양식 → 엔티티 | 엔티티 목록 |
 | 2단계 | 필드 → 속성 (본질적/부가적 분류, 타입 결정, 제약조건) | 속성 명세 |
-| 3단계 | 관계 식별 ([선택] → FK, 참조/붙임/스냅샷 선택) | 관계 다이어그램 |
+| 3단계 | 관계 식별 ([선택]의 출처, 칸마다 참조/붙임 — 정하지 못한 것은 미결정으로) | 관계 다이어그램 |
 | 4단계 | 생명주기 (상태 필드, 시점 필드) | 상태 모델 |
 | 5단계 | 현업 검증 (모든 필드 반영? 규칙 표현? 관계 정확?) | 검증 체크리스트 |
 
@@ -279,21 +278,19 @@ DefectRecord: reported → verified → closed
 
 ## 2. 사상 규칙
 
-### 2.1 규칙 요약 — 정본
+### 2.1 규칙 요약
 
-| 규칙 | From | To | 무리 |
-|------|------|-----|------|
-| 규칙 1 | Main Section | **새 Entity** (주 테이블) | 정의 |
-| 규칙 2 | Field | Attribute (컬럼) | — |
-| 규칙 3 | Child Section | **새 Entity** + 1:N (parent FK) | 정의 |
-| 규칙 4 | Reference Section | **기존 Entity로의 FK** — 지금 참 | 투영 |
-| 규칙 5 | Attachment Section | **그때 값의 고정** — 문서 스냅샷이면 값 복사, 파일이면 파일 테이블 | 투영 |
+규칙의 정본은 [명세 4장](specification.md#4-규칙)입니다. 이 장이 예시로 다루는 구조 규칙 다섯만 한 줄씩 옮깁니다.
 
-> **규칙 1은 Main Section에만 적용됩니다.** 모든 섹션이 테이블이 되는 것이 아닙니다. 정의하는 섹션(Main·Child)만 새 엔티티를 만들고, 투영하는 섹션(Reference·Attachment)은 이미 있는 엔티티에서 필요한 속성만 골라 옵니다 — [방법론 「정의하는 섹션과 투영하는 섹션」](methodology.md#정의하는-섹션과-투영하는-섹션).
+- **규칙 1** — 서식 하나가 주 엔티티 하나를 정의한다. Main 섹션은 그 엔티티의 칸 묶음이다.
+- **규칙 2** — 정의 섹션의 칸은 속성(컬럼)이 된다.
+- **규칙 3** — Child 섹션은 새 엔티티와 1:N(부모 FK)이 된다.
+- **규칙 4** — Reference 섹션은 이미 있는 엔티티로의 관계가 된다. 지금 참.
+- **규칙 5** — Attachment 섹션은 그때 값의 고정이 된다. 바뀌지 않고, 출처를 가리킨다.
+
+> **모든 섹션이 테이블이 되는 것이 아닙니다.** 정의하는 섹션(Main·Child)만 엔티티를 만들고, 투영하는 섹션(Reference·Attachment)은 이미 있는 엔티티에서 필요한 속성만 골라 옵니다 — [방법론 「정의하는 섹션과 투영하는 섹션」](methodology.md#정의하는-섹션과-투영하는-섹션).
 >
-> **규칙 4·5는 관계의 시간 결합 축을 규정합니다.** 관계의 **의미 축** — 무엇 다음에 무엇이 오는가, 무엇을 근거로 쓰였는가 — 는 섹션이 아니라 [흐름](methodology.md#2-문서의-흐름)이 공급합니다.
-
-이 표가 사상 규칙의 정본입니다. 다른 문서에 같은 표가 보이면 오류입니다.
+> **규칙 4·5는 관계의 시간 결합 축을 규정합니다.** 칸 단위의 결합은 규칙 6이, 정하지 못한 결합은 규칙 7이 다룹니다. 관계의 **의미 축** — 무엇 다음에 무엇이 오는가, 무엇을 근거로 쓰였는가 — 는 섹션이 아니라 [흐름](methodology.md#2-문서의-흐름)이 공급합니다(규칙 18 · 19).
 
 ### 2.2 설계 철학
 
@@ -309,18 +306,18 @@ Formology에서 데이터베이스 설계는 **양식 구조에서 자연스럽�
 
 ### 2.3 규칙별 상세
 
-아래 소제목의 괄호는 **[2.1 정본 표](#21-규칙-요약--정본)의 규칙 번호**입니다. 이 절은 그 규칙들이 실제 스키마에서 어떤 모양이 되는지를 보이는 예시이며, 규칙 자체를 다시 정의하지 않습니다.
+아래 소제목의 괄호는 **[명세 4장](specification.md#4-규칙)의 규칙 번호**입니다. 이 절은 그 규칙들이 실제 스키마에서 어떤 모양이 되는지를 보이는 예시이며, 규칙 자체를 다시 정의하지 않습니다.
 
 > SQL은 **예시**입니다. 특정 데이터베이스를 권하는 것이 아닙니다.
 
-#### Main Section → 새 Entity, Reference Section의 Selection → FK  *(규칙 1·4)*
+#### 서식 → 주 Entity, 다른 서식에서 고르는 Selection → FK  *(규칙 1·8)*
 
 **워크숍 양식 구조**:
 ```
 ┌─────────────────────────┐
 │ [Main Section] 의뢰정보 │
 ├─────────────────────────┤
-│ 제품명: [Selection ▼]  │ ← Reference Section Field
+│ 제품명: [Selection ▼]  │ ← 제품 마스터에서 고름
 │ LOT번호: [Text]         │ ← Main Section Field
 │ 수량: [Numeric]         │ ← Main Section Field
 └─────────────────────────┘
@@ -344,7 +341,7 @@ CREATE TABLE products (
 CREATE TABLE qc_requests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   request_number VARCHAR(20) UNIQUE NOT NULL,
-  product_id UUID NOT NULL,                     -- Reference Section → FK
+  product_id UUID NOT NULL,                     -- 제품 마스터에서 고름 → FK
   lot_number VARCHAR(50) NOT NULL,              -- Text Field
   quantity INTEGER NOT NULL,                    -- Numeric Field
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -367,7 +364,7 @@ CREATE TABLE work_logs (
 
 **패턴**: `Main Section Field (Text/Numeric/Date)` → VARCHAR/INTEGER/DATE 컬럼
 
-#### Child Section → 새 Entity + 1:N  *(규칙 3)*
+#### Child Section → 새 Entity + 1:N  *(규칙 3·9)*
 
 **워크숍 양식 구조**:
 ```
@@ -389,12 +386,13 @@ CREATE TABLE work_logs (
 CREATE TABLE qc_request_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   request_id UUID NOT NULL,                  -- Parent FK
-  inspection_type_id UUID NOT NULL,          -- Reference Section Field
-  is_required BOOLEAN DEFAULT false,
+  inspection_type_id UUID NOT NULL,          -- 검사 종류 목록에서 고름 → FK
   FOREIGN KEY (request_id) REFERENCES qc_requests(id) ON DELETE CASCADE,
   FOREIGN KEY (inspection_type_id) REFERENCES inspection_types(id)
 );
 ```
+
+**고른 항목만 행이 됩니다.** 위 양식에서 외관검사·치수검사 두 행이 생기고, 체크하지 않은 중량검사는 행이 되지 않습니다. "고르지 않음"을 `false` 행으로 저장하지 않습니다 — 아무것도 고르지 않은 문서는 행이 0개이고, 그것이 "고른 것이 없다"는 답입니다([결측 규칙](#결측-규칙--답이-없다에는-종류가-있다)).
 
 #### "참조:" 칸 → 최신 버전으로의 FK  *(규칙 4)*
 
@@ -429,19 +427,11 @@ CREATE TABLE defect_attachments (
 );
 ```
 
-**붙임이 문서 스냅샷인 경우**는 파일이 아니라 **값 복사**가 됩니다 — 원본 문서의 그때 값이 이 문서의 칸으로 굳습니다. 두 경우 모두 규칙 5이며, 갈리는 지점은 붙이는 것이 파일이냐 다른 문서의 내용이냐입니다. 구체적인 모습은 [2.5](#25-관계와-시간-결합의-구현)에 있습니다.
+**붙임이 다른 문서의 내용인 경우**는 파일이 아니라 **값의 고정**이 됩니다 — 원본 문서의 그때 값이 이 문서의 칸으로 굳습니다. 두 경우 모두 규칙 5이며, 갈리는 지점은 붙이는 것이 파일이냐 다른 문서의 내용이냐입니다. 구체적인 모습은 [2.5](#25-관계와-시간-결합의-구현)에 있습니다.
 
 ### 2.4 Field 타입 사상
 
-| Field 타입 | DB 컬럼 타입 | 예시 |
-|-----------|-------------|------|
-| Text | VARCHAR/TEXT | `document_no VARCHAR(50)` |
-| Numeric | INTEGER/DECIMAL | `quantity INTEGER` |
-| Date/Time | DATE/TIMESTAMP | `created_at TIMESTAMP` |
-| Selection (Single) | FK (마스터에서 선택) 또는 ENUM (고정 선택지) — §1.3 "어디서 선택?" | `product_id FK` · `priority ENUM('높음','보통','낮음')` |
-| Selection (Multiple) | 1:N 테이블 — 고른 선택지 하나가 한 행. 행의 값은 Selection (Single)과 같이 "어디서 선택?"이 가른다(마스터에서 고르면 FK — 곧 서식과 마스터의 M:N, 고정 선택지면 ENUM) | `qc_items` |
-| Boolean | BOOLEAN | `is_urgent BOOLEAN` |
-| 측정값 (수치·정성 혼합) | 선택형 값 — 수치 컬럼 + 텍스트 컬럼, 행마다 하나 | `value_num DECIMAL NULL` · `value_text VARCHAR NULL` · `CHECK ((value_num IS NULL) <> (value_text IS NULL))` |
+값 종류별 사상은 [1.2의 표](#필드--속성) 하나에 있습니다. 여기서는 그 가운데 설명이 필요한 하나만 다룹니다.
 
 **측정값 칸에 수치와 정성 값이 섞이는 경우.** 점검표 한 장에서 어떤 항목은 "12.3"(압력)이고 어떤 항목은 "정상"·"없음"입니다. 수치 컬럼 하나로 받으면 정성 행이 들어갈 자리가 없고, 텍스트 하나로 받으면 수치 비교·집계를 잃습니다. 같은 값을 두 번 들고 있는 "텍스트 + 수치 파생 컬럼"도 피합니다. 표준이 쓰는 꼴은 **선택형 값**입니다 — 의료 데이터 표준 FHIR의 관측값(`Observation.value[x]`)이 수치·문자열·코드 가운데 하나를 고르는 것과 같습니다. 행마다 그 행의 값에 맞는 칸 하나를 채웁니다.
 
@@ -450,22 +440,22 @@ CREATE TABLE defect_attachments (
 #### Reference Section 관계 (실시간 링크)
 
 ```sql
--- 작업지시서 1:N 작업일지 (Reference Section)
+-- 작업일지가 작업지시서를 참조한다 (Reference Section)
 CREATE TABLE work_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  work_order_id UUID NOT NULL,          -- Reference Section → Parent Document FK
+  work_order_id UUID NOT NULL,          -- Reference Section → 작업지시서로의 FK (지금 값을 읽는다)
   log_date DATE NOT NULL,
-  FOREIGN KEY (work_order_id) REFERENCES work_orders(id) ON DELETE CASCADE
+  FOREIGN KEY (work_order_id) REFERENCES work_orders(id)
 );
 ```
 
-#### Attachment Section 관계 (스냅샷)
+#### Attachment Section 관계 (그때 값)
 
 ```sql
--- 작업일지에 작업지시서 데이터를 스냅샷 복사 (과거 시점 고정)
+-- 작업일지에 작업지시서의 그때 값을 굳혀 둔다 (고정 시점: 작성)
 CREATE TABLE work_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  work_order_id UUID NOT NULL,          -- Reference Section (living link)
+  work_order_id UUID NOT NULL,          -- 참조 (living link) — 아래 붙임 값들의 출처이기도 하다
   product_name VARCHAR(100) NOT NULL,   -- 스냅샷: 그 시점의 제품명 (frozen)
   product_code VARCHAR(50) NOT NULL,    -- 스냅샷: 그 시점의 제품 코드 (frozen)
   target_quantity INTEGER NOT NULL,     -- 스냅샷: 그 시점의 목표 수량 (frozen)
@@ -478,7 +468,7 @@ CREATE TABLE work_logs (
 
 **붙임 값을 언제 굳히는가**는 도출이 답하는 문제이고, **어떻게 굳히는가**는 구현이 답하는 문제입니다.
 
-- 도출이 정하는 것: *문서가 생성되는 순간의 원본 값을 복사한다*
+- 도출이 정하는 것: *고정 시점 — 여기서는 문서를 쓰는 순간 — 의 원본 값을 굳히고, 그것이 어디서 왔는지를 남긴다*
 - 구현이 정하는 것: DB 트리거로 할지, 애플리케이션 레이어에서 할지, 이벤트 핸들러로 할지
 
 방법론이 요구하는 것은 하나뿐입니다 — **그 시점 이후 원본이 바뀌어도 이 값은 바뀌지 않을 것.**
@@ -505,7 +495,7 @@ CREATE TABLE work_logs (
 │ 참조: 생산계획서 PLAN-045│ ← FK (살아있는 링크)
 ├─────────────────────────┤
 │ [Attachment Section]    │
-│ 붙임: 도면.pdf          │  ← 파일 (스냅샷)
+│ 붙임: 도면.pdf          │  ← 파일 (붙임)
 └─────────────────────────┘
 ```
 
@@ -527,12 +517,11 @@ CREATE TABLE qc_requests (
 CREATE TABLE qc_request_items (
   id VARCHAR(50) PRIMARY KEY,
   request_id VARCHAR(50) NOT NULL,
-  item_name VARCHAR(100),
-  is_checked BOOLEAN,
+  item_name VARCHAR(100) NOT NULL,   -- 고른 항목만 행이 된다 (외관, 치수)
   FOREIGN KEY (request_id) REFERENCES qc_requests(id)
 );
 
--- Attachment Section → 파일 Entity (스냅샷)
+-- Attachment Section → 파일 Entity (붙임)
 CREATE TABLE qc_request_attachments (
   id VARCHAR(50) PRIMARY KEY,
   request_id VARCHAR(50) NOT NULL,
@@ -584,8 +573,8 @@ Section-Field 구조가 명확하면 정규화는 자연스럽게 따라옵니�
 
 ```
 1. 워크숍 → 문서 양식 스케치
-2. 패턴 인식 → [선택]=FK 또는 ENUM, [입력]=컬럼, 체크박스 하나=BOOLEAN · 체크박스 묶음=1:N, 참조=FK(최신), 붙임=파일 테이블
-3. 관계 도출 → A→B=부모-자식, "그때"=스냅샷
+2. 패턴 인식 → [선택]=FK 또는 ENUM, [입력]=컬럼, 체크박스 하나=BOOLEAN · 체크박스 묶음=1:N, 참조=FK(지금 값), 붙임=그때 값의 고정
+3. 관계 도출 → A→B=부모-자식, "그때"=붙임, 정하지 못한 칸=미결정
 4. 분류 축 → 생성 방식(1차=테이블 · 2차=뷰/질의) · 목적(요청·지시=승인 흐름) — 접미어는 축의 한국어 실현이지 판정 기준이 아님
 5. DDL 생성 → CREATE TABLE/INDEX/TRIGGER/VIEW
 6. 현업 검증 → "이 테이블이 OO 문서죠?" "맞아요!"
@@ -788,7 +777,7 @@ LOT번호: [ABC-123] → 올바른 형식 (실시간 확인)
 
 **붙임 (Attachment)**: 클립 아이콘, "붙임" 배지, 다운로드/미리보기
 
-**스냅샷 (Snapshot)**: 카메라 아이콘, 타임스탬프, 차이 보기 기능
+**여러 시점의 붙임**: 고정 시점의 타임스탬프, 시점 간 차이 보기
 
 ### 4.6 오류 처리
 
